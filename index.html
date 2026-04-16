@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dudbot λ — Smart Solar Boiler</title>
+  <meta name="description" content="Serverless smart water boiler controller for a solar home in Ma'ale Adumim. Runs on AWS Lambda at $0.00/month. Fully Shabbat-aware.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #07070f;
+      --bg2:      #0e0e1c;
+      --bg3:      #141428;
+      --border:   rgba(255,255,255,0.06);
+      --solar:    #ffb340;
+      --solar2:   #ff6a00;
+      --water:    #38bdf8;
+      --water2:   #0369a1;
+      --green:    #34d399;
+      --purple:   #a78bfa;
+      --pink:     #f472b6;
+      --text:     #eeeef8;
+      --muted:    #6b6b90;
+      --card-bg:  rgba(255,255,255,0.03);
+      --card-border: rgba(255,255,255,0.07);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ─────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(7,7,15,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 1.1rem;
+      color: var(--solar);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+    .nav-logo span { color: var(--water); }
+    nav a.gh-link {
+      display: flex; align-items: center; gap: 0.5rem;
+      text-decoration: none; color: var(--muted);
+      font-size: 0.875rem; font-weight: 500;
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.9rem; border-radius: 8px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    nav a.gh-link:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    /* ── HERO ────────────────────────────────────────────── */
+    #hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 8rem 2rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-stars {
+      position: absolute; inset: 0; pointer-events: none;
+    }
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle var(--d, 3s) ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
+      opacity: 0;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0; transform: scale(0.5); }
+      50% { opacity: var(--op, 0.7); transform: scale(1); }
+    }
+    .hero-glow {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 900px; height: 500px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255,179,64,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-inner {
+      max-width: 1100px; width: 100%;
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 3rem; align-items: center;
+      position: relative; z-index: 1;
+    }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(255,179,64,0.1);
+      border: 1px solid rgba(255,179,64,0.25);
+      color: var(--solar);
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.35rem 0.85rem; border-radius: 100px;
+      margin-bottom: 1.5rem;
+    }
+    .hero-tag::before { content: "●"; font-size: 0.5rem; animation: blink 2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(3rem, 7vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1.0;
+      letter-spacing: -0.04em;
+      margin-bottom: 1.5rem;
+    }
+    .hero-title .word-dud { color: var(--text); }
+    .hero-title .word-bot { color: var(--solar); }
+    .hero-title .word-lambda {
+      color: var(--water);
+      font-style: italic;
+    }
+    .hero-sub {
+      font-size: 1.2rem; color: var(--muted); max-width: 540px;
+      margin-bottom: 2.5rem; line-height: 1.7;
+    }
+    .hero-sub strong { color: var(--text); font-weight: 500; }
+    .hero-badges {
+      display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 2.5rem;
+    }
+    .badge {
+      display: flex; align-items: center; gap: 0.4rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 0.4rem 0.9rem; border-radius: 8px;
+      font-size: 0.825rem; font-weight: 500;
+    }
+    .badge.green { border-color: rgba(52,211,153,0.25); color: var(--green); }
+    .badge.blue  { border-color: rgba(56,189,248,0.25); color: var(--water); }
+    .badge.orange{ border-color: rgba(255,179,64,0.25); color: var(--solar); }
+    .hero-cta {
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      background: var(--solar2);
+      background: linear-gradient(135deg, var(--solar), var(--solar2));
+      color: #fff;
+      font-weight: 600; font-size: 0.95rem;
+      padding: 0.85rem 1.75rem; border-radius: 12px;
+      text-decoration: none;
+      box-shadow: 0 4px 24px rgba(255,106,0,0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(255,106,0,0.45); }
+
+    /* ── BOILER ILLUSTRATION ───────────────────────────────── */
+    .boiler-wrap {
+      position: relative; width: 220px; flex-shrink: 0;
+      animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-14px); }
+    }
+    .boiler-glow {
+      position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%);
+      width: 160px; height: 40px;
+      background: radial-gradient(ellipse, rgba(255,106,0,0.3) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: glow-pulse 2s ease-in-out infinite;
+    }
+    @keyframes glow-pulse {
+      0%,100% { opacity: 0.6; transform: translateX(-50%) scaleX(1); }
+      50%      { opacity: 1;   transform: translateX(-50%) scaleX(1.15); }
+    }
+
+    /* Steam bubbles */
+    .steam { position: absolute; top: 0; left: 50%; pointer-events: none; }
+    .steam-bubble {
+      position: absolute;
+      background: rgba(255,255,255,0.25);
+      border-radius: 50%;
+      animation: rise var(--dur, 2s) ease-out infinite;
+      animation-delay: var(--delay, 0s);
+    }
+    @keyframes rise {
+      0%   { opacity: 0; transform: translateY(0) translateX(0) scale(0.5); }
+      30%  { opacity: 0.8; }
+      100% { opacity: 0; transform: translateY(-70px) translateX(var(--drift, 10px)) scale(1.4); }
+    }
+
+    /* ── STATS STRIP ─────────────────────────────────────── */
+    #stats {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 3rem 2rem;
+    }
+    .stats-inner {
+      max-width: 900px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 2rem; text-align: center;
+    }
+    .stat-val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      font-weight: 800; letter-spacing: -0.04em;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--solar), var(--solar2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+    .stat-val.blue {
+      background: linear-gradient(135deg, var(--water), var(--purple));
+      -webkit-background-clip: text; background-clip: text;
+    }
+    .stat-val.green {
+      background: linear-gradient(135deg, var(--green), var(--water));
+      -webkit-background-clip: text; background-clip: text;
+    }
+    .stat-label { color: var(--muted); font-size: 0.9rem; font-weight: 500; }
+
+    /* ── SHARED SECTION STYLES ───────────────────────────── */
+    section { padding: 6rem 2rem; }
+    .section-inner { max-width: 1100px; margin: 0 auto; }
+    .section-eyebrow {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--solar);
+      margin-bottom: 1rem;
+    }
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700; letter-spacing: -0.03em;
+      line-height: 1.15; margin-bottom: 1.25rem;
+    }
+    .section-desc {
+      color: var(--muted); font-size: 1.05rem; max-width: 580px;
+      line-height: 1.75; margin-bottom: 3rem;
+    }
+
+    /* ── HOW IT WORKS ─────────────────────────────────────── */
+    #how { background: var(--bg); }
+    .flow-steps {
+      display: flex; align-items: flex-start; gap: 0;
+      position: relative; flex-wrap: wrap;
+    }
+    .flow-step {
+      flex: 1; min-width: 160px;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; padding: 0 1rem;
+      position: relative;
+    }
+    .flow-step:not(:last-child)::after {
+      content: "→";
+      position: absolute; right: -0.75rem; top: 2rem;
+      color: var(--border); font-size: 1.5rem;
+      z-index: 1;
+    }
+    .flow-icon {
+      width: 64px; height: 64px;
+      background: var(--bg2);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.75rem; margin-bottom: 1rem;
+      transition: transform 0.2s;
+    }
+    .flow-step:hover .flow-icon { transform: scale(1.1); }
+    .flow-step-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem; font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+    .flow-step-desc { color: var(--muted); font-size: 0.8rem; line-height: 1.5; }
+    .flow-arrow {
+      display: flex; align-items: center; padding-top: 2rem;
+      color: var(--border); font-size: 1.2rem;
+    }
+
+    /* ── ARCHITECTURE BOX ─────────────────────────────────── */
+    .arch-box {
+      background: var(--bg2);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-top: 3rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      line-height: 1.9;
+      overflow-x: auto;
+      color: var(--muted);
+    }
+    .arch-box .hl-orange { color: var(--solar); }
+    .arch-box .hl-blue   { color: var(--water); }
+    .arch-box .hl-green  { color: var(--green); }
+    .arch-box .hl-purple { color: var(--purple); }
+    .arch-box .hl-pink   { color: var(--pink); }
+
+    /* ── CSEI ALGORITHM ──────────────────────────────────── */
+    #csei { background: var(--bg2); }
+    .csei-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .factor-card {
+      background: var(--bg3);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+    .factor-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+      border-color: rgba(255,255,255,0.12);
+    }
+    .factor-icon {
+      font-size: 2rem; margin-bottom: 0.75rem;
+      display: block;
+    }
+    .factor-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem; font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+    .factor-desc { color: var(--muted); font-size: 0.8rem; line-height: 1.55; }
+    .factor-bar-wrap {
+      margin-top: 0.75rem;
+      height: 4px; background: rgba(255,255,255,0.06);
+      border-radius: 4px; overflow: hidden;
+    }
+    .factor-bar {
+      height: 100%; border-radius: 4px;
+      background: var(--solar);
+      transform-origin: left;
+      animation: grow-bar 1.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+      transform: scaleX(0);
+    }
+    @keyframes grow-bar {
+      to { transform: scaleX(1); }
+    }
+    .csei-formula {
+      margin-top: 3rem;
+      background: var(--bg3);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 2rem;
+      display: flex; flex-wrap: wrap; align-items: center;
+      gap: 1rem; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+    }
+    .formula-part {
+      text-align: center;
+      padding: 0.75rem 1.25rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+    }
+    .formula-val {
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--solar); font-family: 'Space Grotesk', sans-serif;
+    }
+    .formula-label { color: var(--muted); font-size: 0.7rem; margin-top: 0.2rem; }
+    .formula-op {
+      font-size: 1.5rem; color: var(--muted);
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+    }
+    .formula-result .formula-val { color: var(--water); font-size: 1.8rem; }
+
+    /* ── SHABBAT ─────────────────────────────────────────── */
+    #shabbat { background: var(--bg); }
+    .shabbat-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 3rem; align-items: start;
+    }
+    .timeline {
+      position: relative; padding-left: 2rem;
+    }
+    .timeline::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--solar) 0%, var(--purple) 50%, var(--water) 100%);
+      border-radius: 2px;
+    }
+    .tl-item {
+      position: relative; padding: 0 0 2rem 1.5rem;
+    }
+    .tl-dot {
+      position: absolute; left: -2.1rem; top: 0.35rem;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+      background: var(--solar);
+    }
+    .tl-dot.shabbat { background: var(--purple); }
+    .tl-dot.skip    { background: var(--muted); }
+    .tl-dot.tzait   { background: var(--green); }
+    .tl-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem; color: var(--muted);
+      margin-bottom: 0.2rem;
+    }
+    .tl-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600; font-size: 0.95rem;
+      margin-bottom: 0.3rem;
+    }
+    .tl-desc { color: var(--muted); font-size: 0.82rem; line-height: 1.55; }
+
+    .shabbat-card {
+      background: var(--bg2);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 2rem;
+    }
+    .shabbat-card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.2rem; font-weight: 700;
+      margin-bottom: 1.25rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .day-type {
+      padding: 1rem; margin-bottom: 0.75rem;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+    }
+    .day-type-name {
+      font-weight: 600; font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .day-type-desc { color: var(--muted); font-size: 0.8rem; line-height: 1.5; }
+    .pill {
+      display: inline-block;
+      padding: 0.15rem 0.6rem; border-radius: 100px;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
+    }
+    .pill.orange { background: rgba(255,179,64,0.15); color: var(--solar); }
+    .pill.purple { background: rgba(167,139,250,0.15); color: var(--purple); }
+    .pill.green  { background: rgba(52,211,153,0.15); color: var(--green); }
+    .pill.gray   { background: rgba(107,107,144,0.2); color: var(--muted); }
+
+    /* ── FAMILY MODE ──────────────────────────────────────── */
+    #family { background: var(--bg2); }
+    .family-timeline {
+      background: var(--bg3);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 2rem 2.5rem;
+      margin-top: 2rem;
+      overflow-x: auto;
+    }
+    .ft-header {
+      display: flex; justify-content: space-between;
+      font-size: 0.75rem; color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 1.5rem;
+      padding: 0 0.5rem;
+    }
+    .ft-row {
+      display: flex; align-items: center;
+      gap: 1rem; margin-bottom: 1.25rem;
+    }
+    .ft-label {
+      width: 130px; flex-shrink: 0;
+      font-size: 0.82rem; font-weight: 500;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .ft-track {
+      flex: 1; height: 32px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+      position: relative;
+    }
+    .ft-block {
+      position: absolute; height: 100%; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 600;
+      white-space: nowrap; overflow: hidden;
+      padding: 0 0.5rem;
+      transition: opacity 0.2s;
+    }
+    .ft-block:hover { opacity: 0.8; }
+    .ft-block.phase1 {
+      background: linear-gradient(90deg, var(--solar2), var(--solar));
+      color: rgba(0,0,0,0.8);
+    }
+    .ft-block.phase2 {
+      background: linear-gradient(90deg, var(--purple), var(--pink));
+      color: rgba(255,255,255,0.9);
+    }
+    .ft-block.candles {
+      background: linear-gradient(90deg, rgba(167,139,250,0.3), rgba(167,139,250,0.15));
+      border: 1px dashed rgba(167,139,250,0.4);
+      color: var(--purple);
+    }
+    .ft-shower {
+      position: absolute; width: 2px; top: 0; bottom: 0;
+      background: rgba(56,189,248,0.6);
+    }
+    .ft-shower-label {
+      position: absolute; top: -1.5rem;
+      font-size: 0.65rem; color: var(--water);
+      white-space: nowrap; transform: translateX(-50%);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .family-legend {
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+      margin-top: 1.5rem; justify-content: center;
+      font-size: 0.8rem; color: var(--muted);
+    }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ── COST ─────────────────────────────────────────────── */
+    #cost { background: var(--bg); }
+    .cost-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 2rem; max-width: 800px;
+    }
+    .cost-card {
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .cost-card.before {
+      background: rgba(248,113,113,0.04);
+      border-color: rgba(248,113,113,0.15);
+    }
+    .cost-card.after {
+      background: rgba(52,211,153,0.04);
+      border-color: rgba(52,211,153,0.2);
+    }
+    .cost-card-label {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; margin-bottom: 1rem;
+    }
+    .cost-card.before .cost-card-label { color: #f87171; }
+    .cost-card.after .cost-card-label  { color: var(--green); }
+    .cost-amount {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 800; letter-spacing: -0.04em;
+      line-height: 1; margin-bottom: 0.25rem;
+    }
+    .cost-card.before .cost-amount { color: #f87171; }
+    .cost-card.after  .cost-amount {
+      background: linear-gradient(135deg, var(--green), var(--water));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cost-per { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+    .cost-items { list-style: none; }
+    .cost-items li {
+      display: flex; justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem; color: var(--muted);
+    }
+    .cost-items li:last-child { border-bottom: none; }
+    .cost-items li strong { color: var(--text); }
+    .cost-savings {
+      margin-top: 2rem;
+      background: rgba(52,211,153,0.06);
+      border: 1px solid rgba(52,211,153,0.2);
+      border-radius: 16px;
+      padding: 1.5rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+      max-width: 800px;
+    }
+    .savings-label { color: var(--muted); font-size: 0.9rem; }
+    .savings-amount {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.75rem; font-weight: 800;
+      color: var(--green); letter-spacing: -0.03em;
+    }
+
+    /* ── FREE TIER TABLE ──────────────────────────────────── */
+    #freetier { background: var(--bg2); }
+    .tier-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--card-border);
+    }
+    .tier-table thead { background: var(--bg3); }
+    .tier-table th {
+      padding: 0.85rem 1.25rem;
+      text-align: left; font-size: 0.8rem; font-weight: 600;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .tier-table td {
+      padding: 0.85rem 1.25rem;
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border);
+    }
+    .tier-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .tier-table td:first-child { font-weight: 600; color: var(--text); }
+    .tier-table .usage { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+    .tier-table .limit { color: var(--muted); font-size: 0.8rem; }
+    .check { color: var(--green); font-weight: 700; }
+
+    /* ── TECH STACK ──────────────────────────────────────── */
+    #stack { background: var(--bg); }
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .stack-card {
+      background: var(--bg2);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .stack-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255,255,255,0.15);
+    }
+    .stack-icon { font-size: 2.25rem; margin-bottom: 0.6rem; display: block; }
+    .stack-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.875rem; font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .stack-role { color: var(--muted); font-size: 0.75rem; line-height: 1.4; }
+
+    /* ── FOOTER ──────────────────────────────────────────── */
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    .footer-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.5rem; font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--solar); margin-bottom: 0.5rem;
+    }
+    .footer-logo span { color: var(--water); }
+    .footer-tagline {
+      color: var(--muted); font-size: 0.875rem;
+      margin-bottom: 2rem;
+    }
+    .footer-links {
+      display: flex; gap: 1.5rem; justify-content: center;
+      flex-wrap: wrap; margin-bottom: 2rem;
+    }
+    .footer-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: 0.875rem;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text); }
+    .footer-copy { color: var(--muted); font-size: 0.8rem; }
+    .footer-heb {
+      font-size: 0.8rem; color: var(--muted);
+      margin-bottom: 1rem;
+      direction: rtl;
+    }
+
+    /* ── SCROLL REVEAL ───────────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .boiler-wrap { display: none; }
+      .shabbat-grid { grid-template-columns: 1fr; }
+      .cost-grid { grid-template-columns: 1fr; }
+      .stats-inner { grid-template-columns: 1fr; }
+      .flow-step:not(:last-child)::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ───────────────────────────────────────────────── -->
+<nav>
+  <a href="#hero" class="nav-logo">dud<span>bot</span> λ</a>
+  <a href="https://github.com/amarkdotdev/dudbot-lambda" class="gh-link" target="_blank" rel="noopener">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+    View on GitHub
+  </a>
+</nav>
+
+<!-- ── HERO ──────────────────────────────────────────────── -->
+<section id="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-stars" id="stars"></div>
+
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-tag">Open source · Ma'ale Adumim, Israel</div>
+      <h1 class="hero-title">
+        <span class="word-dud">dud</span><span class="word-bot">bot</span>&nbsp;<span class="word-lambda">λ</span>
+      </h1>
+      <p class="hero-sub">
+        A <strong>serverless smart water boiler</strong> that reads the sun, respects the Shabbat,
+        and runs the electric backup for exactly as long as needed. <strong>Zero idle time. Zero waste. $0.00/month.</strong>
+      </p>
+      <div class="hero-badges">
+        <span class="badge green">✓ $0.00 / month</span>
+        <span class="badge orange">☀️ Solar-aware CSEI</span>
+        <span class="badge blue">✡ Shabbat & Chag safe</span>
+      </div>
+      <a href="https://github.com/amarkdotdev/dudbot-lambda" class="hero-cta" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        See the code
+      </a>
+    </div>
+
+    <!-- Boiler Illustration -->
+    <div class="boiler-wrap">
+      <div class="boiler-glow"></div>
+      <div class="steam">
+        <div class="steam-bubble" style="width:8px;height:8px;left:-12px;--dur:2.2s;--delay:0s;--drift:-8px;top:-10px"></div>
+        <div class="steam-bubble" style="width:6px;height:6px;left:4px;--dur:1.8s;--delay:0.7s;--drift:12px;top:-10px"></div>
+        <div class="steam-bubble" style="width:10px;height:10px;left:-4px;--dur:2.5s;--delay:1.3s;--drift:-14px;top:-10px"></div>
+      </div>
+      <svg viewBox="0 0 220 340" fill="none" xmlns="http://www.w3.org/2000/svg" width="220">
+        <!-- Sun -->
+        <circle cx="170" cy="50" r="28" fill="url(#sunGrad)" opacity="0.9"/>
+        <g opacity="0.6" stroke="#ffb340" stroke-width="2" stroke-linecap="round">
+          <line x1="170" y1="14" x2="170" y2="7"/>
+          <line x1="170" y1="86" x2="170" y2="93"/>
+          <line x1="134" y1="50" x2="127" y2="50"/>
+          <line x1="206" y1="50" x2="213" y2="50"/>
+          <line x1="145.5" y1="25.5" x2="140" y2="20"/>
+          <line x1="194.5" y1="74.5" x2="200" y2="80"/>
+          <line x1="194.5" y1="25.5" x2="200" y2="20"/>
+          <line x1="145.5" y1="74.5" x2="140" y2="80"/>
+        </g>
+        <!-- Top pipe -->
+        <rect x="97" y="30" width="10" height="20" rx="5" fill="#334155"/>
+        <circle cx="102" cy="26" r="7" fill="#475569"/>
+        <!-- Boiler body -->
+        <rect x="40" y="50" width="124" height="220" rx="20" fill="url(#tankGrad)"/>
+        <rect x="40" y="50" width="124" height="220" rx="20" fill="url(#shineGrad)" opacity="0.4"/>
+        <!-- Inner glass window -->
+        <rect x="70" y="90" width="64" height="90" rx="10" fill="rgba(56,189,248,0.07)" stroke="rgba(56,189,248,0.2)" stroke-width="1"/>
+        <rect x="74" y="94" width="56" height="80" rx="8" fill="url(#waterGrad)" opacity="0.6"/>
+        <!-- Water level bubbles -->
+        <circle cx="90" cy="140" r="3" fill="rgba(255,255,255,0.3)"/>
+        <circle cx="112" cy="132" r="2" fill="rgba(255,255,255,0.2)"/>
+        <circle cx="104" cy="148" r="2.5" fill="rgba(255,255,255,0.25)"/>
+        <!-- Temperature gauge -->
+        <circle cx="170" cy="120" r="16" fill="#1e293b" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <path d="M158 128 A14 14 0 1 1 182 128" stroke="#334155" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M158 128 A14 14 0 0 1 172 107" stroke="url(#gaugeGrad)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <circle cx="170" cy="120" r="4" fill="#ff9500"/>
+        <!-- Heating element glow -->
+        <rect x="60" y="230" width="84" height="22" rx="6" fill="url(#heatGrad)" opacity="0.8"/>
+        <rect x="68" y="234" width="68" height="3" rx="2" fill="rgba(255,150,0,0.5)"/>
+        <rect x="68" y="240" width="68" height="3" rx="2" fill="rgba(255,150,0,0.5)"/>
+        <rect x="68" y="246" width="68" height="3" rx="2" fill="rgba(255,150,0,0.5)"/>
+        <!-- Label -->
+        <text x="102" y="290" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="rgba(255,255,255,0.3)">50L ⚡ ARM64</text>
+        <!-- Bottom pipe -->
+        <rect x="60" y="268" width="10" height="25" rx="5" fill="#334155"/>
+        <rect x="135" y="268" width="10" height="25" rx="5" fill="#334155"/>
+        <!-- Mounting bracket -->
+        <rect x="30" y="90" width="12" height="20" rx="4" fill="#1e293b"/>
+        <rect x="30" y="195" width="12" height="20" rx="4" fill="#1e293b"/>
+        <rect x="162" y="90" width="12" height="20" rx="4" fill="#1e293b"/>
+        <rect x="162" y="195" width="12" height="20" rx="4" fill="#1e293b"/>
+        <!-- Smart controller chip -->
+        <rect x="150" y="160" width="32" height="24" rx="4" fill="#1e293b" stroke="rgba(167,139,250,0.4)" stroke-width="1"/>
+        <text x="166" y="175" text-anchor="middle" font-size="8" fill="#a78bfa" font-family="JetBrains Mono, monospace">λ</text>
+        <line x1="154" y1="170" x2="148" y2="170" stroke="rgba(167,139,250,0.4)" stroke-width="1"/>
+        <line x1="154" y1="174" x2="148" y2="174" stroke="rgba(167,139,250,0.4)" stroke-width="1"/>
+        <line x1="178" y1="170" x2="184" y2="170" stroke="rgba(167,139,250,0.4)" stroke-width="1"/>
+        <line x1="178" y1="174" x2="184" y2="174" stroke="rgba(167,139,250,0.4)" stroke-width="1"/>
+        <defs>
+          <radialGradient id="sunGrad" cx="50%" cy="50%">
+            <stop offset="0%" stop-color="#fff7e6"/>
+            <stop offset="50%" stop-color="#ffb340"/>
+            <stop offset="100%" stop-color="#ff6a00"/>
+          </radialGradient>
+          <linearGradient id="tankGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1e3a5f"/>
+            <stop offset="100%" stop-color="#0f1f38"/>
+          </linearGradient>
+          <linearGradient id="shineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.15)"/>
+            <stop offset="40%" stop-color="rgba(255,255,255,0)"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0.2)"/>
+          </linearGradient>
+          <linearGradient id="waterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#38bdf8"/>
+            <stop offset="100%" stop-color="#0369a1"/>
+          </linearGradient>
+          <linearGradient id="heatGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="rgba(255,106,0,0.6)"/>
+            <stop offset="50%" stop-color="rgba(255,179,64,0.8)"/>
+            <stop offset="100%" stop-color="rgba(255,106,0,0.6)"/>
+          </linearGradient>
+          <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#38bdf8"/>
+            <stop offset="100%" stop-color="#ff9500"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ── STATS ──────────────────────────────────────────────── -->
+<div id="stats">
+  <div class="stats-inner">
+    <div class="reveal">
+      <div class="stat-val" id="counter-cost">$0.00</div>
+      <div class="stat-label">per month, forever</div>
+    </div>
+    <div class="reveal reveal-delay-1">
+      <div class="stat-val blue">~180</div>
+      <div class="stat-label">Lambda invocations / month</div>
+    </div>
+    <div class="reveal reveal-delay-2">
+      <div class="stat-val green">100%</div>
+      <div class="stat-label">Shabbat & Chag safe</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── HOW IT WORKS ───────────────────────────────────────── -->
+<section id="how">
+  <div class="section-inner">
+    <div class="section-eyebrow">How it works</div>
+    <h2 class="section-title reveal">Weather in. Hot water out.</h2>
+    <p class="section-desc reveal">Every afternoon at 16:00 (14:00 on Fridays), a single Lambda invocation fetches the day's weather, calculates how much solar energy the water heater actually got, and schedules exactly the right amount of electric backup — all without a server running 24/7.</p>
+
+    <div class="flow-steps">
+      <div class="flow-step reveal">
+        <div class="flow-icon">☀️</div>
+        <div class="flow-step-title">Weather fetch</div>
+        <div class="flow-step-desc">Open-Meteo gives solar radiation, temps, wind for Ma'ale Adumim</div>
+      </div>
+      <div class="flow-step reveal reveal-delay-1">
+        <div class="flow-icon">🧮</div>
+        <div class="flow-step-title">CSEI score</div>
+        <div class="flow-step-desc">Five solar factors score the day 0–6.5; deficit drives minutes</div>
+      </div>
+      <div class="flow-step reveal reveal-delay-2">
+        <div class="flow-icon">📅</div>
+        <div class="flow-step-title">Shabbat check</div>
+        <div class="flow-step-desc">Hebcal API confirms candle/havdalah times and caps accordingly</div>
+      </div>
+      <div class="flow-step reveal reveal-delay-3">
+        <div class="flow-icon">⚡</div>
+        <div class="flow-step-title">EventBridge</div>
+        <div class="flow-step-desc">Two one-time rules scheduled: boiler ON and boiler OFF</div>
+      </div>
+      <div class="flow-step reveal reveal-delay-4">
+        <div class="flow-icon">📱</div>
+        <div class="flow-step-title">Telegram</div>
+        <div class="flow-step-desc">Full plan sent to your phone before anything physically happens</div>
+      </div>
+    </div>
+
+    <div class="arch-box reveal">
+<span class="hl-orange">EventBridge</span> (16:00 daily / 14:00 on Fri)
+  └─ <span class="hl-purple">action: "calculate"</span>  → Lambda fetches weather, runs CSEI, checks Shabbat
+       ├─ schedules <span class="hl-orange">action: "on", minutes: N</span>   (fires in ~1 min)
+       ├─ schedules <span class="hl-purple">action: "on", minutes: M</span>   (Phase 2, evening)  — if family mode
+       └─ sends <span class="hl-blue">📊 plan → Telegram</span>
+
+<span class="hl-orange">EventBridge</span> (one-time, self-deleting)
+  └─ <span class="hl-purple">action: "on", minutes: N</span>  → boiler ON, schedules "off", sends <span class="hl-blue">🔥 Telegram</span>
+
+<span class="hl-orange">EventBridge</span> (one-time, self-deleting)
+  └─ <span class="hl-purple">action: "off"</span>             → boiler OFF, sends <span class="hl-blue">🔴 Telegram</span>
+
+<span class="hl-green">No polling. No always-on server. Zero idle Lambda invocations.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── CSEI ───────────────────────────────────────────────── -->
+<section id="csei">
+  <div class="section-inner">
+    <div class="section-eyebrow">The Algorithm</div>
+    <h2 class="section-title reveal">CSEI — Composite Solar Efficiency Index</h2>
+    <p class="section-desc reveal">Five weather factors combine into a single 0–6.5 score. A perfect sunny day in winter scores ~6.5 — the solar collector does almost all the work. A cloudy rainy day scores ~1. The delta from 6.5 is the deficit the electric element needs to cover.</p>
+
+    <div class="csei-grid">
+      <div class="factor-card reveal">
+        <span class="factor-icon">☀️</span>
+        <div class="factor-name">Sun Efficiency</div>
+        <div class="factor-desc">Average solar radiation 10:00–15:00 vs. the theoretical 850 W/m² peak. The backbone of the score.</div>
+        <div class="factor-bar-wrap"><div class="factor-bar" style="width:100%;background:linear-gradient(90deg,#ff9500,#ffb340)"></div></div>
+      </div>
+      <div class="factor-card reveal reveal-delay-1">
+        <span class="factor-icon">📊</span>
+        <div class="factor-name">Stability Factor</div>
+        <div class="factor-desc">% of solar hours above 600 W/m². Even a high average isn't useful if clouds chop the radiation into useless bursts.</div>
+        <div class="factor-bar-wrap"><div class="factor-bar" style="width:85%;background:linear-gradient(90deg,#a78bfa,#7c3aed)"></div></div>
+      </div>
+      <div class="factor-card reveal reveal-delay-2">
+        <span class="factor-icon">💨</span>
+        <div class="factor-name">Wind Factor</div>
+        <div class="factor-desc">High wind strips heat from the collector even on a sunny day. A gentle breeze is neutral; a Sharav squall costs minutes.</div>
+        <div class="factor-bar-wrap"><div class="factor-bar" style="width:75%;background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></div></div>
+      </div>
+      <div class="factor-card reveal reveal-delay-3">
+        <span class="factor-icon">🌙</span>
+        <div class="factor-name">Night Factor</div>
+        <div class="factor-desc">Cold overnight minimum = more heat already lost before the sun rises. Minus 5°C nights need more recovery time.</div>
+        <div class="factor-bar-wrap"><div class="factor-bar" style="width:65%;background:linear-gradient(90deg,#6b7280,#94a3b8)"></div></div>
+      </div>
+      <div class="factor-card reveal reveal-delay-4">
+        <span class="factor-icon">🌡️</span>
+        <div class="factor-name">Thermal Gain</div>
+        <div class="factor-desc">Temperature rise from 9am to 2pm is a proxy for daytime heat accumulation — a slow cold day stays cold even when sunny.</div>
+        <div class="factor-bar-wrap"><div class="factor-bar" style="width:80%;background:linear-gradient(90deg,#f472b6,#e11d48)"></div></div>
+      </div>
+    </div>
+
+    <div class="csei-formula reveal">
+      <div class="formula-part">
+        <div class="formula-val">6.5</div>
+        <div class="formula-label">max CSEI</div>
+      </div>
+      <div class="formula-op">−</div>
+      <div class="formula-part">
+        <div class="formula-val">CSEI</div>
+        <div class="formula-label">today's score</div>
+      </div>
+      <div class="formula-op">=</div>
+      <div class="formula-part">
+        <div class="formula-val" style="color:var(--pink)">deficit</div>
+        <div class="formula-label">solar shortfall</div>
+      </div>
+      <div class="formula-op">→</div>
+      <div class="formula-part formula-result">
+        <div class="formula-val">(deficit / 6.5) × 120</div>
+        <div class="formula-label">raw minutes needed</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SHABBAT ────────────────────────────────────────────── -->
+<section id="shabbat">
+  <div class="section-inner">
+    <div class="section-eyebrow">Shabbat & Yom Tov</div>
+    <h2 class="section-title reveal">Built for a Jewish home.</h2>
+    <p class="section-desc reveal">Four different day types, four different behaviours. Every edge case handled — including Shabbat ending directly into Yom Tov.</p>
+
+    <div class="shabbat-grid">
+      <div>
+        <div class="shabbat-card reveal">
+          <div class="shabbat-card-title">🕯️ Shabbat/Chag timeline</div>
+
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-dot"></div>
+              <div class="tl-time">Friday 14:00</div>
+              <div class="tl-title">Calculate (single phase)</div>
+              <div class="tl-desc">All household members combined. No Phase 2 scheduled. Minutes capped before candle lighting.</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot"></div>
+              <div class="tl-time">Friday ~14:01</div>
+              <div class="tl-title">🔥 Boiler ON</div>
+              <div class="tl-desc">Heats for the full family — enough for afternoon baths and the evening.</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot"></div>
+              <div class="tl-time">Friday ~15:30</div>
+              <div class="tl-title">🔴 Boiler OFF</div>
+              <div class="tl-desc">Always finishes before candle lighting. Shabbat is safe.</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot shabbat"></div>
+              <div class="tl-time">Friday ~18:00</div>
+              <div class="tl-title">🕯️ Shabbat begins</div>
+              <div class="tl-desc">No Lambda invocations until havdalah. EventBridge rules are gone.</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot skip"></div>
+              <div class="tl-time">Saturday 16:00</div>
+              <div class="tl-title">⏸️ Skipped</div>
+              <div class="tl-desc">is_forbidden() blocks the run. Telegram notified. One-time rule scheduled for tzait + 2 min.</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot tzait"></div>
+              <div class="tl-time">Saturday ~19:32</div>
+              <div class="tl-title">🌟 Post-tzait run</div>
+              <div class="tl-desc">EventBridge one-time rule fires. Normal two-phase heating runs for Motzei Shabbat showers.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="shabbat-card reveal reveal-delay-1">
+          <div class="shabbat-card-title">📅 Day type guide</div>
+
+          <div class="day-type">
+            <div class="day-type-name"><span class="pill orange">Erev Shabbat / Erev Chag</span></div>
+            <div class="day-type-desc">Runs at 14:00. <strong>Single phase</strong> — all household members combined, shower times ignored. Capped before candle lighting. The 16:00 trigger silently skips.</div>
+          </div>
+
+          <div class="day-type">
+            <div class="day-type-name"><span class="pill purple">Shabbat / Yom Tov</span></div>
+            <div class="day-type-desc">16:00 trigger fires but <code>should_run_now()</code> returns False. Telegram skip notice sent. One-time EventBridge rule created for tzait + 2 min.</div>
+          </div>
+
+          <div class="day-type">
+            <div class="day-type-name"><span class="pill green">Post-tzait (Motzei)</span></div>
+            <div class="day-type-desc">Deferred run fires after havdalah. Full two-phase logic applies. <code>force_single_phase = False</code> — shower times matter again.</div>
+          </div>
+
+          <div class="day-type">
+            <div class="day-type-name"><span class="pill gray">Shabbat → Yom Tov</span></div>
+            <div class="day-type-desc">Edge case: when havdalah transitions directly into a new Chag, <code>can_run_post_tzait()</code> checks <code>is_forbidden(now)</code> — returns False immediately. Boiler stays off. Last day of Chag handles post-tzait normally.</div>
+          </div>
+
+          <div class="day-type">
+            <div class="day-type-name">🛡️ Hard safety guard</div>
+            <div class="day-type-desc">Every <code>action: "on"</code> invocation checks <code>is_forbidden(now)</code> before touching the boiler — regardless of how it arrived. A stale rule can never cause chilul Shabbat.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAMILY MODE ────────────────────────────────────────── -->
+<section id="family">
+  <div class="section-inner">
+    <div class="section-eyebrow">Family Mode</div>
+    <h2 class="section-title reveal">Two phases. One fixed budget.</h2>
+    <p class="section-desc reveal">Set <code>HOUSEHOLD</code> to a JSON array of your family groups and the algorithm splits the CSEI heating budget proportionally — kids get Phase 1 right after calculate, adults get Phase 2 just before they shower. Same total minutes as without family mode; just timed better.</p>
+
+    <!-- Timeline visualization -->
+    <div class="family-timeline reveal">
+      <div class="ft-header">
+        <span>14:00</span><span>15:00</span><span>16:00</span>
+        <span>17:00</span><span>18:00</span><span>19:00</span>
+        <span>20:00</span><span>21:00</span><span>22:00</span>
+      </div>
+
+      <!-- Phase 1: children 17:30 shower -->
+      <div class="ft-row">
+        <div class="ft-label">👶 4 children</div>
+        <div class="ft-track">
+          <!-- Phase 1 block: runs 16:01 - 16:32 (~31min, 58% of 54min) -->
+          <!-- Track is ~8 hours wide = 16:00 to 22:00. Each hour = 100/8 = 12.5% -->
+          <!-- 16:01 = 0h01m from 16:00 = 0.125%+... let me compute as % of 14:00-22:00 = 8h -->
+          <!-- 16:01 from 14:00 = 2h01m = 121min. 8h=480min. Start: 121/480=25.2% -->
+          <!-- Duration 31 min = 31/480=6.5% -->
+          <div class="ft-block phase1" style="left:25.2%;width:6.5%">+31 min</div>
+          <!-- Shower marker at 17:30 = 3.5h from 14:00 = 210min = 43.75% -->
+          <div class="ft-shower" style="left:43.75%">
+            <div class="ft-shower-label">🚿 17:30</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 2: adults 21:00 shower -->
+      <div class="ft-row">
+        <div class="ft-label">👨‍👩 2 adults</div>
+        <div class="ft-track">
+          <!-- Phase 2 starts at 20:37 (23min before 21:00) = 6h37m from 14:00 = 397min = 82.7% -->
+          <!-- Duration 23 min = 23/480=4.8% -->
+          <div class="ft-block phase2" style="left:82.7%;width:4.8%">+23 min</div>
+          <!-- Shower marker at 21:00 = 7h from 14:00 = 420min = 87.5% -->
+          <div class="ft-shower" style="left:87.5%">
+            <div class="ft-shower-label">🚿 21:00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Candle lighting reference (Friday) -->
+      <div class="ft-row" style="margin-top:0.5rem">
+        <div class="ft-label" style="color:var(--purple);font-size:0.78rem">🕯️ Erev Shabbat</div>
+        <div class="ft-track">
+          <!-- Candles at ~18:10 = 4h10m from 14:00 = 250min = 52.1%. No Phase 2. -->
+          <div class="ft-block candles" style="left:0;width:52.1%">single phase only — Phase 2 blocked</div>
+          <div class="ft-shower" style="left:52.1%;background:rgba(167,139,250,0.8)">
+            <div class="ft-shower-label" style="color:var(--purple)">🕯️ ~18:10</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="family-legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:linear-gradient(90deg,#ff6a00,#ffb340)"></div>
+        <span>Phase 1 — children (58% of budget)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:linear-gradient(90deg,#a78bfa,#f472b6)"></div>
+        <span>Phase 2 — adults (42% of budget)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(56,189,248,0.6);width:2px;height:14px;border-radius:1px"></div>
+        <span>Shower time marker</span>
+      </div>
+    </div>
+
+    <div style="margin-top:2rem;padding:1.25rem 1.5rem;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.2);border-radius:12px;font-size:0.875rem;color:var(--muted)">
+      <strong style="color:var(--purple)">Budget split</strong>: 4 children × 0.7 units = 2.8 · 2 adults × 1.0 = 2.0 · Total = 4.8 units<br>
+      Phase 1 share: 2.8/4.8 = <strong style="color:var(--solar)">58%</strong> · Phase 2 share: 2.0/4.8 = <strong style="color:var(--purple)">42%</strong> · Same total minutes as a 2-adult household, just split optimally.
+    </div>
+  </div>
+</section>
+
+<!-- ── COST ───────────────────────────────────────────────── -->
+<section id="cost">
+  <div class="section-inner">
+    <div class="section-eyebrow">Cost</div>
+    <h2 class="section-title reveal">From $5/month to $0.00/month.</h2>
+    <p class="section-desc reveal">The original dudbot ran on an EC2 instance that sat idle 23 hours a day. Lambda charges per 100ms of actual work. The math is brutal in the best possible way.</p>
+
+    <div class="cost-grid">
+      <div class="cost-card before reveal">
+        <div class="cost-card-label">Before — EC2 / Lightsail</div>
+        <div class="cost-amount">$5</div>
+        <div class="cost-per">per month, whether you use it or not</div>
+        <ul class="cost-items">
+          <li><strong>Lightsail nano</strong><span>$5.00</span></li>
+          <li><strong>Always-on process</strong><span>24/7 idle</span></li>
+          <li><strong>Manual deploys</strong><span>SSH + Docker</span></li>
+        </ul>
+      </div>
+
+      <div class="cost-card after reveal reveal-delay-1">
+        <div class="cost-card-label">After — Lambda + EventBridge</div>
+        <div class="cost-amount">$0.00</div>
+        <div class="cost-per">per month, permanently in free tier</div>
+        <ul class="cost-items">
+          <li><strong>Lambda</strong><span class="usage">~180 req / month vs 1M free</span></li>
+          <li><strong>EventBridge</strong><span class="usage">~180 rules vs 14M free</span></li>
+          <li><strong>ECR</strong><span class="usage">~250MB vs 500MB free</span></li>
+          <li><strong>S3 state</strong><span class="usage">&lt;1MB vs 5GB free</span></li>
+          <li><strong>CloudWatch</strong><span class="usage">&lt;10MB vs 5GB free</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="cost-savings reveal">
+      <div>
+        <div class="savings-label">Annual savings over Lightsail</div>
+        <div class="savings-amount">$60.00 / year</div>
+      </div>
+      <div style="color:var(--muted);font-size:0.875rem;max-width:360px;text-align:right">
+        Every service stays comfortably within AWS permanent free tiers. This isn't a 12-month free tier — it's free forever at this usage level.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FREE TIER TABLE ────────────────────────────────────── -->
+<section id="freetier">
+  <div class="section-inner">
+    <div class="section-eyebrow">AWS Free Tier</div>
+    <h2 class="section-title reveal">Every service. Permanently free.</h2>
+
+    <table class="tier-table reveal">
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>Monthly usage</th>
+          <th>Free tier limit</th>
+          <th>Cost</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>AWS Lambda</td>
+          <td class="usage">~180 invocations · ~900 GB-sec</td>
+          <td class="limit">1M requests · 400K GB-sec</td>
+          <td><span class="check">$0.00 ✓</span></td>
+        </tr>
+        <tr>
+          <td>EventBridge Scheduler</td>
+          <td class="usage">~180 one-time rules</td>
+          <td class="limit">14M invocations / month</td>
+          <td><span class="check">$0.00 ✓</span></td>
+        </tr>
+        <tr>
+          <td>Amazon ECR</td>
+          <td class="usage">~250 MB container image</td>
+          <td class="limit">500 MB / month</td>
+          <td><span class="check">$0.00 ✓</span></td>
+        </tr>
+        <tr>
+          <td>Amazon S3</td>
+          <td class="usage">&lt; 1 MB state files</td>
+          <td class="limit">5 GB storage</td>
+          <td><span class="check">$0.00 ✓</span></td>
+        </tr>
+        <tr>
+          <td>CloudWatch Logs</td>
+          <td class="usage">&lt; 10 MB / month</td>
+          <td class="limit">5 GB ingestion</td>
+          <td><span class="check">$0.00 ✓</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── TECH STACK ─────────────────────────────────────────── -->
+<section id="stack">
+  <div class="section-inner">
+    <div class="section-eyebrow">Built with</div>
+    <h2 class="section-title reveal">Zero-dependency stack.</h2>
+    <p class="section-desc reveal">No Kubernetes. No ECS. No RDS. Just Lambda, EventBridge, and a few API calls to services that were free to begin with.</p>
+
+    <div class="stack-grid">
+      <div class="stack-card reveal">
+        <span class="stack-icon">λ</span>
+        <div class="stack-name">AWS Lambda</div>
+        <div class="stack-role">arm64 container, 512MB, 2 min timeout</div>
+      </div>
+      <div class="stack-card reveal reveal-delay-1">
+        <span class="stack-icon">⏰</span>
+        <div class="stack-name">EventBridge Scheduler</div>
+        <div class="stack-role">One-time self-deleting rules for on/off events</div>
+      </div>
+      <div class="stack-card reveal reveal-delay-2">
+        <span class="stack-icon">🗃️</span>
+        <div class="stack-name">Amazon S3</div>
+        <div class="stack-role">State bucket: last decision, OAuth token, flags</div>
+      </div>
+      <div class="stack-card reveal reveal-delay-3">
+        <span class="stack-icon">📦</span>
+        <div class="stack-name">Amazon ECR</div>
+        <div class="stack-role">Container registry with lifecycle auto-cleanup</div>
+      </div>
+      <div class="stack-card reveal reveal-delay-4">
+        <span class="stack-icon">☀️</span>
+        <div class="stack-name">Open-Meteo</div>
+        <div class="stack-role">Free weather & solar radiation API (no key needed)</div>
+      </div>
+      <div class="stack-card reveal">
+        <span class="stack-icon">✡️</span>
+        <div class="stack-name">Hebcal API</div>
+        <div class="stack-role">Free Jewish calendar: candle lighting & havdalah times</div>
+      </div>
+      <div class="stack-card reveal reveal-delay-1">
+        <span class="stack-icon">📱</span>
+        <div class="stack-name">Telegram Bot</div>
+        <div class="stack-role">Outbound-only notifications to your phone</div>
+      </div>
+      <div class="stack-card reveal reveal-delay-2">
+        <span class="stack-icon">🐍</span>
+        <div class="stack-name">Python 3.12</div>
+        <div class="stack-role">Minimal deps: requests, boto3, zoneinfo</div>
+      </div>
+      <div class="stack-card reveal reveal-delay-3">
+        <span class="stack-icon">🏗️</span>
+        <div class="stack-name">Terraform</div>
+        <div class="stack-role">All infra as code — one apply to provision everything</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-logo">dud<span>bot</span> λ</div>
+  <div class="footer-heb">שומר שבת · Ma'ale Adumim · ישראל</div>
+  <div class="footer-tagline">Smart solar water heating for a Jewish home. $0.00/month.</div>
+  <div class="footer-links">
+    <a href="https://github.com/amarkdotdev/dudbot-lambda" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://amark.dev" target="_blank" rel="noopener">amark.dev</a>
+  </div>
+  <div class="footer-copy">Open source · MIT License</div>
+</footer>
+
+<script>
+  // ── Twinkling stars
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      top:${Math.random() * 100}%;
+      left:${Math.random() * 100}%;
+      --d:${2 + Math.random() * 4}s;
+      --delay:${Math.random() * 5}s;
+      --op:${0.3 + Math.random() * 0.6};
+    `;
+    starsEl.appendChild(s);
+  }
+
+  // ── Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // ── Nav scroll shadow
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    nav.style.boxShadow = window.scrollY > 20
+      ? '0 2px 20px rgba(0,0,0,0.4)' : 'none';
+  }, { passive: true });
+</script>
+</body>
+</html>
