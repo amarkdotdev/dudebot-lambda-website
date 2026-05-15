@@ -677,6 +677,109 @@
       direction: rtl;
     }
 
+    /* ── SMART RULES ─────────────────────────────────────── */
+    #rules { background: var(--bg2); }
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.25rem;
+    }
+    .rule-card {
+      background: var(--bg3);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 1.75rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+    .rule-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at top left, var(--rule-glow, rgba(255,179,64,0.06)) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .rule-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+      border-color: rgba(255,255,255,0.12);
+    }
+    .rule-icon {
+      font-size: 1.5rem; margin-bottom: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      width: 48px; height: 48px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+    }
+    .rule-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem; font-weight: 700;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
+    }
+    .rule-desc { color: var(--muted); font-size: 0.83rem; line-height: 1.6; }
+    .rule-pill {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      margin-top: 0.85rem;
+      padding: 0.2rem 0.6rem; border-radius: 100px;
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .rule-pill.orange { background: rgba(255,179,64,0.12); color: var(--solar); }
+    .rule-pill.blue   { background: rgba(56,189,248,0.12); color: var(--water); }
+    .rule-pill.green  { background: rgba(52,211,153,0.12); color: var(--green); }
+    .rule-pill.purple { background: rgba(167,139,250,0.12); color: var(--purple); }
+    .rule-pill.pink   { background: rgba(244,114,182,0.12); color: var(--pink); }
+
+    /* ── TELEGRAM PREVIEW ─────────────────────────────────── */
+    .telegram-wrap {
+      margin-top: 3rem;
+      background: var(--bg3);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .telegram-header {
+      padding: 1rem 1.5rem;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.75rem;
+      font-size: 0.82rem; color: var(--muted);
+    }
+    .tg-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+    .telegram-body {
+      padding: 1.5rem;
+      background: #0e1621;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    .tg-msg {
+      display: flex; gap: 0.75rem; margin-bottom: 0.85rem;
+    }
+    .tg-msg:last-child { margin-bottom: 0; }
+    .tg-avatar {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.875rem; background: #2b5278;
+    }
+    .tg-bubble {
+      background: #182533;
+      border-radius: 4px 12px 12px 12px;
+      padding: 0.55rem 0.85rem;
+      max-width: 340px;
+      color: #eee;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    .tg-bubble.skip  { background: #1a1428; border: 1px solid rgba(167,139,250,0.15); }
+    .tg-bubble.sunny { background: #1a1800; border: 1px solid rgba(255,179,64,0.15); }
+    .tg-bubble.fire  { background: #1a1400; border: 1px solid rgba(255,106,0,0.2); }
+    .tg-bubble.done  { background: #0d1a12; border: 1px solid rgba(52,211,153,0.15); }
+    .tg-bold { font-weight: 700; }
+    .tg-time { font-size: 0.62rem; color: #5a7a9a; margin-top: 0.2rem; text-align: right; }
+    .tg-sep { border: none; border-top: 1px solid rgba(255,255,255,0.04); margin: 0.5rem 0; }
+
     /* ── SCROLL REVEAL ───────────────────────────────────── */
     .reveal {
       opacity: 0;
@@ -847,8 +950,8 @@
       <div class="stat-label">Lambda invocations / month</div>
     </div>
     <div class="reveal reveal-delay-2">
-      <div class="stat-val green">100%</div>
-      <div class="stat-label">Shabbat & Chag safe</div>
+      <div class="stat-val green">6</div>
+      <div class="stat-label">smart contextual rules</div>
     </div>
   </div>
 </div>
@@ -970,6 +1073,106 @@
   </div>
 </section>
 
+<!-- ── SMART RULES ────────────────────────────────────────── -->
+<section id="rules">
+  <div class="section-inner">
+    <div class="section-eyebrow">Smart Decisions</div>
+    <h2 class="section-title reveal">It knows when not to run.</h2>
+    <p class="section-desc reveal">Turning the boiler on isn't always the right call. dudbot has a set of contextual rules that adapt heating to the real situation — not just the forecast.</p>
+
+    <div class="rules-grid">
+
+      <div class="rule-card reveal" style="--rule-glow:rgba(255,179,64,0.07)">
+        <div class="rule-icon">☀️</div>
+        <div class="rule-name">Hot day? Skip it.</div>
+        <div class="rule-desc">If the CSEI algorithm calculates fewer than 15 minutes of backup needed, the boiler stays off entirely. Not worth the thermal shock for 8 minutes. You get a Telegram explaining exactly why.</div>
+        <div class="rule-pill orange">First run only</div>
+      </div>
+
+      <div class="rule-card reveal reveal-delay-1" style="--rule-glow:rgba(167,139,250,0.07)">
+        <div class="rule-icon">🛁</div>
+        <div class="rule-name">Post-kids full reheat</div>
+        <div class="rule-desc">By the time the adults shower (21:00), the kids have drained the tank. Phase 2 uses a full independent reheat budget — not just a proportional slice of what was calculated at 16:00.</div>
+        <div class="rule-pill purple">Phase 2 logic</div>
+      </div>
+
+      <div class="rule-card reveal reveal-delay-2" style="--rule-glow:rgba(52,211,153,0.06)">
+        <div class="rule-icon">🗓️</div>
+        <div class="rule-name">Season-aware ceiling</div>
+        <div class="rule-desc">The maximum heating time drops as the year warms. Deep winter allows 120 min; spring drops to 70. The algorithm never over-heats on a cold but ultimately manageable April day.</div>
+        <div class="rule-pill green">Auto monthly</div>
+      </div>
+
+      <div class="rule-card reveal reveal-delay-3" style="--rule-glow:rgba(56,189,248,0.06)">
+        <div class="rule-icon">⏰</div>
+        <div class="rule-name">Boiler finishes on time</div>
+        <div class="rule-desc">Phase 2 is scheduled so the boiler finishes exactly when the adults need it — no waiting around. Phase 1 finishes with a small buffer before the kids' shower to account for pipe heat loss.</div>
+        <div class="rule-pill blue">Heat-loss aware</div>
+      </div>
+
+      <div class="rule-card reveal reveal-delay-4" style="--rule-glow:rgba(244,114,182,0.06)">
+        <div class="rule-icon">🔄</div>
+        <div class="rule-name">Shabbat recovery</div>
+        <div class="rule-desc">When Shabbat blocks the 16:00 run, an EventBridge rule fires 2 minutes after tzait. Full two-phase logic applies — you get hot water for Motzei Shabbat showers regardless.</div>
+        <div class="rule-pill pink">Auto post-tzait</div>
+      </div>
+
+      <div class="rule-card reveal" style="--rule-glow:rgba(255,179,64,0.05)">
+        <div class="rule-icon">🔒</div>
+        <div class="rule-name">Hard safety guard</div>
+        <div class="rule-desc">Every boiler-on action checks <code style="font-size:0.72rem;background:rgba(255,255,255,0.07);padding:0.1rem 0.4rem;border-radius:4px">is_forbidden(now)</code> regardless of how it arrived. A stale EventBridge rule can never cause chilul Shabbat — physically impossible.</div>
+        <div class="rule-pill orange">Last line of defence</div>
+      </div>
+
+    </div>
+
+    <!-- Telegram preview -->
+    <div class="telegram-wrap reveal" style="margin-top:3rem">
+      <div class="telegram-header">
+        <div class="tg-dot"></div>
+        <span>dudbot notifications · what a typical day looks like</span>
+      </div>
+      <div class="telegram-body">
+
+        <div class="tg-msg">
+          <div class="tg-avatar">🤖</div>
+          <div>
+            <div class="tg-bubble fire">
+              <div class="tg-bold">📊 Phase 1: ON 16:01 +32 min (off ~16:33) · Phase 2: ON 20:28 +32 min (off ~21:00)</div>
+              <hr class="tg-sep">
+              <div style="font-size:0.75rem;color:#8899aa">CSEI 3.8 → deficit 2.7 → 38 min raw + 10 correction<br>Demand: 4 children (17:30) + 2 adults (21:00) → 58% share Phase 1 / ×1.00 post-kids Phase 2<br>→ <b>32 min</b> Phase 1 · <b>32 min</b> Phase 2<br>📅 ז׳ בסיון תשפ״ו | Not Shabbat/chag</div>
+            </div>
+            <div class="tg-time">16:00</div>
+          </div>
+        </div>
+
+        <div class="tg-msg">
+          <div class="tg-avatar">🤖</div>
+          <div>
+            <div class="tg-bubble sunny">
+              <div class="tg-bold">☀️ No heating needed today</div>
+              <div style="font-size:0.75rem;color:#8899aa;margin-top:0.2rem">Only 9 min calculated — not worth running the boiler for less than 15 min.<br>CSEI 6.1 → deficit 0.4 → 9 min · Great solar day!</div>
+            </div>
+            <div class="tg-time">16:00 · sunny day example</div>
+          </div>
+        </div>
+
+        <div class="tg-msg">
+          <div class="tg-avatar">🤖</div>
+          <div>
+            <div class="tg-bubble skip">
+              <div class="tg-bold">⏸️ Skipped (Shabbat/chag)</div>
+              <div style="font-size:0.75rem;color:#8899aa;margin-top:0.2rem">Shabbat until ~19:32 · Post-tzait run scheduled for 19:34<br>📅 שבת קודש</div>
+            </div>
+            <div class="tg-time">Saturday 16:00</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ── SHABBAT ────────────────────────────────────────────── -->
 <section id="shabbat">
   <div class="section-inner">
@@ -1061,8 +1264,8 @@
 <section id="family">
   <div class="section-inner">
     <div class="section-eyebrow">Family Mode</div>
-    <h2 class="section-title reveal">Two phases. One fixed budget.</h2>
-    <p class="section-desc reveal">Set <code>HOUSEHOLD</code> to a JSON array of your family groups and the algorithm splits the CSEI heating budget proportionally — kids get Phase 1 right after calculate, adults get Phase 2 just before they shower. Same total minutes as without family mode; just timed better.</p>
+    <h2 class="section-title reveal">Two phases. Smart budgeting.</h2>
+    <p class="section-desc reveal">Set <code>HOUSEHOLD</code> to a JSON array of your family groups. Phase 1 heats proportionally for early showers. Phase 2 runs a full independent reheat for adults — because by then, the kids have drained the tank and it needs a proper recovery.</p>
 
     <!-- Timeline visualization -->
     <div class="family-timeline reveal">
@@ -1089,13 +1292,12 @@
         </div>
       </div>
 
-      <!-- Phase 2: adults 21:00 shower -->
+      <!-- Phase 2: adults 21:00 shower — full independent reheat (tank depleted by kids) -->
       <div class="ft-row">
         <div class="ft-label">👨‍👩 2 adults</div>
         <div class="ft-track">
-          <!-- Phase 2 starts at 20:37 (23min before 21:00) = 6h37m from 14:00 = 397min = 82.7% -->
-          <!-- Duration 23 min = 23/480=4.8% -->
-          <div class="ft-block phase2" style="left:82.7%;width:4.8%">+23 min</div>
+          <!-- Phase 2: ~32 min (full reheat). Starts 20:28 = 6h28m from 14:00 = 388min = 80.8%. Duration 32/480=6.7% -->
+          <div class="ft-block phase2" style="left:80.8%;width:6.7%">+32 min</div>
           <!-- Shower marker at 21:00 = 7h from 14:00 = 420min = 87.5% -->
           <div class="ft-shower" style="left:87.5%">
             <div class="ft-shower-label">🚿 21:00</div>
@@ -1119,11 +1321,11 @@
     <div class="family-legend">
       <div class="legend-item">
         <div class="legend-dot" style="background:linear-gradient(90deg,#ff6a00,#ffb340)"></div>
-        <span>Phase 1 — children (58% of budget)</span>
+        <span>Phase 1 — children (58% of CSEI budget)</span>
       </div>
       <div class="legend-item">
         <div class="legend-dot" style="background:linear-gradient(90deg,#a78bfa,#f472b6)"></div>
-        <span>Phase 2 — adults (42% of budget)</span>
+        <span>Phase 2 — adults (full independent reheat)</span>
       </div>
       <div class="legend-item">
         <div class="legend-dot" style="background:rgba(56,189,248,0.6);width:2px;height:14px;border-radius:1px"></div>
@@ -1131,9 +1333,20 @@
       </div>
     </div>
 
-    <div style="margin-top:2rem;padding:1.25rem 1.5rem;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.2);border-radius:12px;font-size:0.875rem;color:var(--muted)">
-      <strong style="color:var(--purple)">Budget split</strong>: 4 children × 0.7 units = 2.8 · 2 adults × 1.0 = 2.0 · Total = 4.8 units<br>
-      Phase 1 share: 2.8/4.8 = <strong style="color:var(--solar)">58%</strong> · Phase 2 share: 2.0/4.8 = <strong style="color:var(--purple)">42%</strong> · Same total minutes as a 2-adult household, just split optimally.
+    <div style="margin-top:2rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div style="padding:1.25rem 1.5rem;background:rgba(255,179,64,0.05);border:1px solid rgba(255,179,64,0.18);border-radius:12px;font-size:0.84rem;color:var(--muted)">
+        <strong style="color:var(--solar)">Phase 1 — proportional</strong><br><br>
+        4 children × 0.7 = 2.8 units<br>
+        2 adults × 1.0 = 2.0 units<br>
+        Total = 4.8 units<br><br>
+        Phase 1 share: 2.8 ÷ 4.8 = <strong style="color:var(--solar)">58%</strong> of today's budget
+      </div>
+      <div style="padding:1.25rem 1.5rem;background:rgba(167,139,250,0.05);border:1px solid rgba(167,139,250,0.18);border-radius:12px;font-size:0.84rem;color:var(--muted)">
+        <strong style="color:var(--purple)">Phase 2 — full reheat</strong><br><br>
+        Kids have drained the tank by 21:00.<br>
+        Adults can't rely on a fractional slice.<br><br>
+        Phase 2 budget: 2.0 ÷ 2 (baseline) = <strong style="color:var(--purple)">×1.00</strong> — same as heating solo
+      </div>
     </div>
   </div>
 </section>
