@@ -10,7 +10,7 @@ env:
 
 jobs:
   deploy:
-    name: Deploy to amark.dev/dudebot
+    name: Deploy to amark.dev/dudbot
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
 
@@ -25,19 +25,19 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # Deploy to dudebot/ prefix (serves amark.dev/dudebot/)
-      - name: Sync to S3 (dudebot/ prefix)
+      # Deploy to dudbot/ prefix (serves amark.dev/dudbot/)
+      - name: Sync to S3 (dudbot/ prefix)
         run: |
-          aws s3 sync . s3://${{ secrets.AMARK_S3_BUCKET }}/dudebot/ \
+          aws s3 sync . s3://${{ secrets.AMARK_S3_BUCKET }}/dudbot/ \
             --delete \
             --exclude ".git/*" \
             --exclude ".github/*" \
             --cache-control "public,max-age=300"
 
-      # Also upload index.html as dudebot.html for amark.dev/dudebot (no trailing slash)
-      - name: Upload root redirect (dudebot.html)
+      # Also upload index.html as dudbot.html for amark.dev/dudbot (no trailing slash)
+      - name: Upload root page (dudbot.html)
         run: |
-          aws s3 cp index.html s3://${{ secrets.AMARK_S3_BUCKET }}/dudebot.html \
+          aws s3 cp index.html s3://${{ secrets.AMARK_S3_BUCKET }}/dudbot.html \
             --cache-control "public,max-age=300" \
             --content-type "text/html"
 
@@ -45,4 +45,4 @@ jobs:
         run: |
           aws cloudfront create-invalidation \
             --distribution-id ${{ secrets.AMARK_CF_DISTRIBUTION_ID }} \
-            --paths "/dudebot" "/dudebot/*"
+            --paths "/dudbot" "/dudbot/*"
