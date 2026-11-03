@@ -1068,10 +1068,11 @@
       </div>
       <div class="formula-op">→</div>
       <div class="formula-part formula-result">
-        <div class="formula-val">(deficit / 6.5) × 120</div>
-        <div class="formula-label">raw minutes needed</div>
+        <div class="formula-val">0.57 × (raw + correction)</div>
+        <div class="formula-label">calibrated base minutes</div>
       </div>
     </div>
+    <p class="section-desc reveal" style="margin:1.25rem auto 0;max-width:780px;text-align:center">Runtime is tuned down by about 43% before family demand is split. A former 53-minute Phase 1 estimate becomes about 30 minutes. Phase 2 has its own hard ceiling of 30 minutes, even when the weather model or household setting asks for more.</p>
   </div>
 </section>
 
@@ -1094,8 +1095,8 @@
       <div class="rule-card reveal reveal-delay-1" style="--rule-glow:rgba(167,139,250,0.07)">
         <div class="rule-icon">🛁</div>
         <div class="rule-name">Post-kids full reheat</div>
-        <div class="rule-desc">By the time the adults shower (21:00), the kids have drained the tank. Phase 2 uses a full independent reheat budget — not just a proportional slice of what was calculated at 16:00.</div>
-        <div class="rule-pill purple">Phase 2 logic</div>
+        <div class="rule-desc">By the adults' shower, the kids may have drawn down the tank. Phase 2 gets an independent reheat estimate, using the tuned weather budget and never exceeding 30 minutes.</div>
+        <div class="rule-pill purple">Phase 2 · 30 min max</div>
       </div>
 
       <div class="rule-card reveal reveal-delay-2" style="--rule-glow:rgba(52,211,153,0.06)">
@@ -1140,9 +1141,9 @@
           <div class="tg-avatar">🤖</div>
           <div>
             <div class="tg-bubble fire">
-              <div class="tg-bold">📊 Phase 1: ON 16:01 +32 min (off ~16:33) · Phase 2: ON 20:28 +32 min (off ~21:00)</div>
+              <div class="tg-bold">📊 Phase 1: ON 16:01 +30 min (off ~16:31) · Phase 2: ON 20:30 +30 min (off ~21:00)</div>
               <hr class="tg-sep">
-              <div style="font-size:0.75rem;color:#8899aa">CSEI 3.8 → deficit 2.7 → 38 min raw + 10 correction<br>Demand: 4 children (17:30) + 2 adults (21:00) → 58% share Phase 1 / ×1.00 post-kids Phase 2<br>→ <b>32 min</b> Phase 1 · <b>32 min</b> Phase 2<br>📅 ז׳ בסיון תשפ״ו | Not Shabbat/chag</div>
+              <div style="font-size:0.75rem;color:#8899aa">Weather estimate → ×0.57 runtime calibration<br>Demand: 4 children (17:30) + 2 adults (21:00) → proportional Phase 1 / independent post-kids Phase 2<br>→ <b>30 min</b> Phase 1 · <b>30 min maximum</b> Phase 2<br>📅 Example plan | Runtime cap applied</div>
             </div>
             <div class="tg-time">16:00</div>
           </div>
@@ -1281,12 +1282,12 @@
       <div class="ft-row">
         <div class="ft-label">👶 4 children</div>
         <div class="ft-track">
-          <!-- Phase 1 block: runs 16:01 - 16:32 (~31min, 58% of 54min) -->
+          <!-- Illustrative Phase 1 block: 30 minutes -->
           <!-- Track is ~8 hours wide = 16:00 to 22:00. Each hour = 100/8 = 12.5% -->
           <!-- 16:01 = 0h01m from 16:00 = 0.125%+... let me compute as % of 14:00-22:00 = 8h -->
           <!-- 16:01 from 14:00 = 2h01m = 121min. 8h=480min. Start: 121/480=25.2% -->
           <!-- Duration 31 min = 31/480=6.5% -->
-          <div class="ft-block phase1" style="left:25.2%;width:6.5%">+31 min</div>
+          <div class="ft-block phase1" style="left:25.2%;width:6.25%">+30 min</div>
           <!-- Shower marker at 17:30 = 3.5h from 14:00 = 210min = 43.75% -->
           <div class="ft-shower" style="left:43.75%">
             <div class="ft-shower-label">🚿 17:30</div>
@@ -1298,8 +1299,8 @@
       <div class="ft-row">
         <div class="ft-label">👨‍👩 2 adults</div>
         <div class="ft-track">
-          <!-- Phase 2: ~32 min (full reheat). Starts 20:28 = 6h28m from 14:00 = 388min = 80.8%. Duration 32/480=6.7% -->
-          <div class="ft-block phase2" style="left:80.8%;width:6.7%">+32 min</div>
+          <!-- Phase 2 example: 30-minute hard maximum, 20:30 to 21:00 -->
+          <div class="ft-block phase2" style="left:81.25%;width:6.25%">+30 min max</div>
           <!-- Shower marker at 21:00 = 7h from 14:00 = 420min = 87.5% -->
           <div class="ft-shower" style="left:87.5%">
             <div class="ft-shower-label">🚿 21:00</div>
@@ -1327,7 +1328,7 @@
       </div>
       <div class="legend-item">
         <div class="legend-dot" style="background:linear-gradient(90deg,#a78bfa,#f472b6)"></div>
-        <span>Phase 2 — adults (full independent reheat)</span>
+        <span>Phase 2 — adults (independent reheat, max 30 min)</span>
       </div>
       <div class="legend-item">
         <div class="legend-dot" style="background:rgba(56,189,248,0.6);width:2px;height:14px;border-radius:1px"></div>
