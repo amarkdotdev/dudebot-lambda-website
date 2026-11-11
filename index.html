@@ -1072,7 +1072,7 @@
         <div class="formula-label">calibrated base minutes</div>
       </div>
     </div>
-    <p class="section-desc reveal" style="margin:1.25rem auto 0;max-width:780px;text-align:center">Runtime is tuned down by about 43% before family demand is split. A former 53-minute Phase 1 estimate becomes about 30 minutes. Phase 2 has its own hard ceiling of 30 minutes, even when the weather model or household setting asks for more.</p>
+    <p class="section-desc reveal" style="margin:1.25rem auto 0;max-width:780px;text-align:center">Runtime is tuned down by about 43%, then the early kids' phase gets a 20% buffer. Yesterday's 27-minute kids estimate would now be about 32 minutes. Phase 2 remains independent and has a hard ceiling of 30 minutes.</p>
   </div>
 </section>
 
@@ -1141,9 +1141,9 @@
           <div class="tg-avatar">🤖</div>
           <div>
             <div class="tg-bubble fire">
-              <div class="tg-bold">📊 Phase 1: ON 16:01 +30 min (off ~16:31) · Phase 2: ON 20:30 +30 min (off ~21:00)</div>
+              <div class="tg-bold">📊 Phase 1: ON 16:01 +32 min (off ~16:33) · Phase 2: ON 20:30 +30 min (off ~21:00)</div>
               <hr class="tg-sep">
-              <div style="font-size:0.75rem;color:#8899aa">Weather estimate → ×0.57 runtime calibration<br>Demand: 4 children (17:30) + 2 adults (21:00) → proportional Phase 1 / independent post-kids Phase 2<br>→ <b>30 min</b> Phase 1 · <b>30 min maximum</b> Phase 2<br>📅 Example plan | Runtime cap applied</div>
+              <div style="font-size:0.75rem;color:#8899aa">Weather estimate → ×0.57 calibration → +20% kids buffer<br>Demand: 4 children (17:30) + 2 adults (21:00) → ~70% Phase 1 share / independent post-kids Phase 2<br>→ <b>32 min</b> Phase 1 · <b>30 min maximum</b> Phase 2<br>📅 Example plan | Runtime cap applied</div>
             </div>
             <div class="tg-time">16:00</div>
           </div>
@@ -1268,7 +1268,7 @@
   <div class="section-inner">
     <div class="section-eyebrow">Family Mode</div>
     <h2 class="section-title reveal">Two phases. Smart budgeting.</h2>
-    <p class="section-desc reveal">Set <code>HOUSEHOLD</code> to a JSON array of your family groups. Phase 1 heats proportionally for early showers. Phase 2 runs a full independent reheat for adults — because by then, the kids have drained the tank and it needs a proper recovery.</p>
+    <p class="section-desc reveal">Set <code>HOUSEHOLD</code> to a JSON array of your family groups. Phase 1 allocates for early showers and adds 20% when children are in that phase. Phase 2 runs an independent adult reheat, capped at 30 minutes.</p>
 
     <!-- Timeline visualization -->
     <div class="family-timeline reveal">
@@ -1282,12 +1282,12 @@
       <div class="ft-row">
         <div class="ft-label">👶 4 children</div>
         <div class="ft-track">
-          <!-- Illustrative Phase 1 block: 30 minutes -->
+          <!-- Illustrative Phase 1 block: 32 minutes including the kids buffer -->
           <!-- Track is ~8 hours wide = 16:00 to 22:00. Each hour = 100/8 = 12.5% -->
           <!-- 16:01 = 0h01m from 16:00 = 0.125%+... let me compute as % of 14:00-22:00 = 8h -->
           <!-- 16:01 from 14:00 = 2h01m = 121min. 8h=480min. Start: 121/480=25.2% -->
           <!-- Duration 31 min = 31/480=6.5% -->
-          <div class="ft-block phase1" style="left:25.2%;width:6.25%">+30 min</div>
+          <div class="ft-block phase1" style="left:25.2%;width:6.7%">+32 min</div>
           <!-- Shower marker at 17:30 = 3.5h from 14:00 = 210min = 43.75% -->
           <div class="ft-shower" style="left:43.75%">
             <div class="ft-shower-label">🚿 17:30</div>
@@ -1324,7 +1324,7 @@
     <div class="family-legend">
       <div class="legend-item">
         <div class="legend-dot" style="background:linear-gradient(90deg,#ff6a00,#ffb340)"></div>
-        <span>Phase 1 — children (58% of CSEI budget)</span>
+        <span>Phase 1 — children (~70% share incl. 20% buffer)</span>
       </div>
       <div class="legend-item">
         <div class="legend-dot" style="background:linear-gradient(90deg,#a78bfa,#f472b6)"></div>
@@ -1338,11 +1338,11 @@
 
     <div style="margin-top:2rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
       <div style="padding:1.25rem 1.5rem;background:rgba(255,179,64,0.05);border:1px solid rgba(255,179,64,0.18);border-radius:12px;font-size:0.84rem;color:var(--muted)">
-        <strong style="color:var(--solar)">Phase 1 — proportional</strong><br><br>
+        <strong style="color:var(--solar)">Phase 1 — kids buffer</strong><br><br>
         4 children × 0.7 = 2.8 units<br>
         2 adults × 1.0 = 2.0 units<br>
         Total = 4.8 units<br><br>
-        Phase 1 share: 2.8 ÷ 4.8 = <strong style="color:var(--solar)">58%</strong> of today's budget
+        Base share: 2.8 ÷ 4.8 = 58%. With the 20% kids buffer: <strong style="color:var(--solar)">~70%</strong> of calibrated base minutes
       </div>
       <div style="padding:1.25rem 1.5rem;background:rgba(167,139,250,0.05);border:1px solid rgba(167,139,250,0.18);border-radius:12px;font-size:0.84rem;color:var(--muted)">
         <strong style="color:var(--purple)">Phase 2 — full reheat</strong><br><br>
